@@ -108,6 +108,6 @@ class GraphController < ApplicationController
   #Keane : added for ticket 42
   protected
   def load_context
-    @vector = RspMetadata.rsp_keys
+    @vector = Earth::MetadataAttribute.metadata_attribute_names
   end
 end

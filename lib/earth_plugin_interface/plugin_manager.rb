@@ -195,6 +195,53 @@ class PluginManager
     new_plugin_class.new
   end
   
+  def list_plugins(flag, plugin)
+    ENV["RAILS_ENV"] = "development"
+    require File.join(File.dirname(__FILE__), '..', '..', 'config', 'environment')
+    plugins = nil
+    
+    if flag == "all" and plugin == "none"
+      plugins = Earth::PluginDescriptor::find(:all, :select => "name as plugin_name", 
+                                              :order => "plugin_name")
+                                    
+    elsif flag == "info" and plugin == "none"
+      plugins = Earth::PluginDescriptor.find(:all, 
+                        :select => "plugin_descriptors.name as plugin_name, 
+                                    plugin_descriptors.version,
+                                    extension_points.name as extension,
+                                    extension_points.host_plugin",
+                        :joins => "left join extension_points on
+                                    extension_points.id = plugin_descriptors.extension_point_id",
+                        :order => "plugin_name")
+    else
+      plugins = Earth::PluginDescriptor.find(:all, 
+                        :select => "plugin_descriptors.name as plugin_name, 
+                                    plugin_descriptors.version,
+                                    extension_points.name as extension,
+                                    extension_points.host_plugin",
+                        :joins => "left join extension_points on
+                                    extension_points.id = plugin_descriptors.extension_point_id",
+                        :conditions => [ "plugin_descriptors.name = ?", plugin], 
+                        :order => "plugin_name")
+    end
+    
+    if plugins.length == 0 or plugins == nil
+      if plugin == "" then
+        puts "There is no plugin installed."
+      else
+        puts "There is no plugin installed with the name '" + plugin + "'."
+      end
+    else
+      plugins.each do |plugin|
+        if flag == "all"
+          puts plugin.plugin_name
+        else
+          puts plugin.plugin_name + "( v" + plugin.version.to_s  + " ) <= " + plugin.host_plugin + "." + plugin.extension
+        end
+      end
+    end
+  end
+  
   private
   def destroy_related_extension_point(plugin_name)
     plugin_name = plugin_name.sub('Earth','')

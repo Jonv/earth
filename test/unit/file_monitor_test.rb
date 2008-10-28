@@ -47,10 +47,10 @@ class FileMonitorTest < Test::Unit::TestCase
     Earth::File.delete_all
     Earth::Directory.delete_all
     Earth::Server.delete_all
-
+    
     server = Earth::Server.this_server
     @directory = server.directories.create(:name => @dir, :path => @dir)
-
+    
     @fileMonitor = FileMonitor.new
   end
   

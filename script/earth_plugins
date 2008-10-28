@@ -1,0 +1,94 @@
+#!/usr/bin/env ruby
+
+# Copyright (C) 2007 Rising Sun Pictures and Matthew Landauer
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Ken - Probably don't need this line
+#require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_plugin_interface', 'plugin_manager')
+
+require 'ostruct'
+require 'optparse'
+
+CWD = File.dirname(__FILE__)
+
+BANNER = <<END_OF_STRING
+USAGE: 
+  #{$0} list -  List all the plugins currently installed.
+  #{$0} list info - List all the plugins with more information.
+  #{$0} list info <plugin_name> - List the information of the <plugin_name>.
+  #{$0} sign [-k FILE | --key FILE] <path to plugin_file> - Sign a plugins using the select key.
+  #{$0} install <path to plugin> - Install the earth daemon plugin at the given path.
+  #{$0} install <path to plugin> <extension point> <host plugin> - Install the earth daemon plugin at the given path, as an extension for the plugin host.
+  #{$0} uninstall <plugin name> - Uninstall a plugin.
+EXAMPLE:
+  #{$0} list info EarthFileMonitor
+END_OF_STRING
+
+class EarthPluginsCommand
+  def parse_command_line
+    @options = OpenStruct.new
+
+    @options.action = "list"
+    @options.params = Array.new
+    
+    opts = OptionParser.new
+    opts.banner = BANNER
+    
+    if ARGV.length <= 0 then
+      puts opts.banner
+      exit
+    end
+    
+    if @commands_to_use.has_key? ARGV[0] then
+      @options.action = @commands_to_use[ARGV[0]]
+    else
+      puts opts.banner
+      exit
+    end
+    
+    for i in 1..ARGV.length-1 do
+      @options.params[i-1] = ARGV[i]
+    end
+  end
+  
+  def initialize
+    begin
+      @commands_to_use = {"list" => "list_plugins", 
+                          "install" => "install_plugin", 
+                          "sign" => "sign_plugin", 
+                          "uninstall" => "uninstall_plugin"}
+      parse_command_line
+    rescue => err
+      $stderr.puts $!
+      exit 10
+    end
+  end
+  
+  def run
+    command = "\"" + CWD + "/" + @options.action + "\""
+    
+    if @options.params.length > 0 then
+      for param in @options.params
+        #command = command + " " + param
+        command = command + ", \"" + param + "\""
+      end
+    end
+    puts command
+    eval("system(" + command + ")")
+  end
+end
+
+EarthPluginsCommand.new.run

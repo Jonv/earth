@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+
+# Copyright (C) 2007 Rising Sun Pictures and Matthew Landauer
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_plugin_interface', 'plugin_manager')
+require 'optparse'
+
+opts = OptionParser.new
+opts.banner = <<END_OF_STRING
+USAGE: 
+  #{$0} -  List all the plugins currently installed.
+  #{$0} info - List all the plugins with more information.
+  #{$0} info <plugin_name> - List the information of the <plugin_name>.
+EXAMPLE:
+  #{$0} info EarthFileMonitor
+END_OF_STRING
+opts.on_tail("-h", "--help", "Show this message") do
+  puts opts
+  exit
+end
+opts.separator "General Options:"
+
+begin
+  opts.parse!(ARGV)
+rescue
+  puts opts
+  exit 1
+end
+
+flag = "all"
+plugin = "none"
+
+if ARGV.length == 1
+  flag = ARGV[0]
+elsif ARGV.length == 2
+  flag = ARGV[0]
+  plugin = ARGV[1]
+end
+
+plugin_manager = PluginManager.new
+
+begin
+   plugin_manager.list_plugins(flag, plugin)
+rescue => err
+  $stderr.puts "Unable to list plug-ins."
+  raise
+end
