@@ -27,6 +27,7 @@ require 'yaml'
 require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_plugin_interface', 'earth_plugin.rb')
 require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_plugin_interface', 'plugin_manager.rb')
 require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_plugin_interface', 'extensions.rb')
+require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_api', 'metadata_api.rb')
 require File.join(File.dirname(__FILE__), '..', 'lib', 'earthd_helper.rb')
 include Extensions
 
@@ -332,10 +333,13 @@ class Earthd
     message = "Uptime: #{format_uptime(Time.now - @start_time)} <br>\n"
     message += "Status: #{@booted ? 'Running' : 'Booting'} <br>\n"
     if @booted
-      #message += "File Monitor Status: #{@file_monitor.status_info}\n"
-      #TODO earthd_status log file must be configurable like earthd.log
-      status_info = read_status_from('/tmp/earthd_status.log')
-      message += "File Monitor Status: #{status_info}\n"
+      if not LOAD_FILE_MONITOR_AS_PLUGIN
+        status_info = @file_monitor.status_info
+      else
+        #TODO earthd_status log file must be configurable like earthd.log
+        status_info = read_status_from('/tmp/earthd_status.log')
+      end
+      message += "File Monitor Status: #{status_info} <br>\n"
       message += "Daemon Version: #{@daemon_version.strip}\n"
     end
     message
@@ -378,9 +382,11 @@ class Earthd
       "Refusing to remove directory '#{path}': not readable"
     else
     	if Earth::Server::this_server.directories.exists?(:path => path)
-    		dir_id = Earth::Server::this_server.directories.find(:first, :conditions => [ "path = ?", path]).id
+    		dir = Earth::Server::this_server.directories.find(:first, :conditions => [ "path = ?", path])
     		logger.debug("Directory '#{path}' removed.")
-    		Earth::Server::this_server.directories.destroy(dir_id)
+                #remove all related metadata
+    		EarthApi::MetadataApi.delete_all_files_metadata_under_dir_all(dir)
+    		Earth::Server::this_server.directories.destroy(dir.id)
         return "OK"
     	else
     		return "Cannot remove directory '#{path}': path not found."
@@ -519,9 +525,9 @@ class Earthd
 
       last_known_good_file_monitor = nil
 
-#      if not LOAD_FILE_MONITOR_AS_PLUGIN
-#        @file_monitor = FileMonitor.new
-#      end
+      if not LOAD_FILE_MONITOR_AS_PLUGIN
+        @file_monitor = FileMonitor.new(false)
+      end
 
       while true
         #for testing
@@ -533,24 +539,16 @@ class Earthd
         # TODO earthd_status logger must be sent also. After it is identified like the main logger 
         extension_point("main_loop",self.class.to_s,:logger => logger, :cache => cache, :only_initial_update => false, :force_update_time =>@config["override_update_interval"])       
 
-=begin
+
         begin
-          if LOAD_FILE_MONITOR_AS_PLUGIN
-            @file_monitor = @plugin_manager.load_plugin("EarthFileMonitor", loaded_plugin_versions["EarthFileMonitor"]) || @file_monitor
-            raise RuntimeError, "No file monitor plugin installed." unless @file_monitor
-            if loaded_plugin_versions["EarthFileMonitor"].nil? or loaded_plugin_versions["EarthFileMonitor"] < @file_monitor.class.plugin_version
-              loaded_plugin_versions["EarthFileMonitor"] = @file_monitor.class.plugin_version
+          if not LOAD_FILE_MONITOR_AS_PLUGIN
+            @file_monitor.logger = logger
+            @file_monitor.iteration(cache, false, @config["override_update_interval"])
+            if last_known_good_file_monitor and last_known_good_file_monitor != @file_monitor
+              Class.remove_class(last_known_good_file_monitor.class)
             end
-            
-            raise RuntimeError, "No file monitor found in database!" unless @file_monitor
-            logger.info("Using file monitor version #{@file_monitor.class.plugin_version}")
+            last_known_good_file_monitor = @file_monitor
           end
-          @file_monitor.logger = logger
-          @file_monitor.iteration(cache, false, @config["override_update_interval"])
-          if last_known_good_file_monitor and last_known_good_file_monitor != @file_monitor
-            Class.remove_class(last_known_good_file_monitor.class)
-          end
-          last_known_good_file_monitor = @file_monitor
         rescue => err
           if last_known_good_file_monitor \
             and last_known_good_file_monitor != @file_monitor \
@@ -566,7 +564,7 @@ class Earthd
             raise
           end
         end
-=end
+
       end
     rescue => err
       logger.fatal("Exiting: Daemon died")      
