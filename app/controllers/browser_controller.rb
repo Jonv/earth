@@ -24,6 +24,11 @@ class BrowserController < ApplicationController
 
   before_filter :load_context, :only => $the_sections
   
+  def initialize
+ 	@size_type = @@webapp_config["size_type"].to_sym
+
+  end
+  
   def index
     redirect_to :action => 'show'
   end
@@ -75,7 +80,7 @@ class BrowserController < ApplicationController
     end
 
     joins = "JOIN directories ON files.directory_id = directories.id"
-    include_attributes = [ "name", "directory_id", "modified", "bytes", "uid" ]
+    include_attributes = [ "name", "directory_id", "modified", "bytes", "uid" ,"blocks"]
     select = include_attributes.map {|attr| "files.#{attr} as #{attr}" }.join(", ")
 
     if @directory

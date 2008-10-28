@@ -46,7 +46,11 @@ module Earth
         size = s.size
         any_empty = true if size.count == 0
         if show_empty || size.count > 0
-          [s, size.bytes]
+          if @size_type == :disk
+			[s, size.diskSize]
+ 		else
+ 			[s, size.bytes]
+ 		end
         end
       end
       

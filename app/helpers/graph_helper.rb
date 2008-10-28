@@ -46,7 +46,11 @@ module GraphHelper
     end
 
     # Recursively fill level arrays
-    add_segments(1, 360.0, level_segment_array, directory, directory.size.bytes)
+    if @size_type == :disk
+ 	add_segments(1, 360.0, level_segment_array, directory, directory.size.diskSize)
+	else
+	add_segments(1, 360.0, level_segment_array, directory, directory.size.bytes)
+    end
 
     # Post-process level arrays
     for level in (1..@level_count)
@@ -72,8 +76,14 @@ module GraphHelper
     #  arbitrary scale and sort descending by the radius (largest
     #  circle first).
     #
-    servers_and_radius = @servers.select { |server| server.size.bytes > 0 }.map do |server|
-      { :server => server, :relative_radius => Math.sqrt(server.size.bytes) }
+    if @size_type == :disk
+ 	servers_and_radius = @servers.select { |server| server.size.diskSize > 0 }.map do |server|
+	{ :server => server, :relative_radius => Math.sqrt(server.size.diskSize) }
+	end
+	else
+	servers_and_radius = @servers.select { |server| server.size.bytes > 0 }.map do |server|
+	{ :server => server, :relative_radius => Math.sqrt(server.size.bytes) }
+	end
     end
 
     servers_and_radius.sort! do |entry1, entry2|
@@ -366,7 +376,11 @@ private
       small_directories_bytes = 0
 
       directory.children.each do |child|
-        child_bytes = child.size.bytes
+        if @size_type == :disk
+ 		child_bytes = child.size.diskSize
+ 	   else
+		child_bytes = child.size.bytes
+	   end
         segment_angle = child_bytes * angle_range / parent_bytes
         if segment_angle >= @minimum_angle
           big_directories << child
@@ -381,11 +395,19 @@ private
       small_files_bytes = 0
 
       directory.files.each do |file|
-        segment_angle = file.bytes * angle_range / parent_bytes
+        if @size_type == :disk
+		segment_angle = file.size.diskSize * angle_range / parent_bytes
+	   else
+		segment_angle = file.size.bytes * angle_range / parent_bytes
+	   end
         if segment_angle >= @minimum_angle
           big_files << file
         else
-          small_files_bytes += file.bytes
+          if @size_type == :disk
+		small_files_bytes += file.size.diskSize
+		else
+		small_files_bytes += file.size.bytes
+		end
           small_files << file
         end
       end
@@ -422,7 +444,18 @@ private
                                 :tooltip => "#{small_directories.size} directories in ...#{directory.path_relative_to(@directory)}/ (#{GraphHelper::format_human(small_directories_bytes)})")
         else
           child = small_directories[0]
-          segment = Segment.new(:angle => small_directories_angle, 
+         if @size_type == :disk
+		segment = Segment.new(:angle => small_directories_angle,
+		:type => ((small_directories_angle >= @minimum_angle or @remainder_mode != :empty) ? :directory : :empty),
+		:name => "#{child.name}/",
+		:href => url_for(:controller => :graph,
+		:escape => false,
+		:overwrite_params => {:server => @server.name,
+ 		:action => nil,
+		:path => child.path}),
+ 		:tooltip => "...#{child.path_relative_to(@directory)}/ (#{GraphHelper::format_human(child.size.diskSize)})")
+ 		else
+ 		segment = Segment.new(:angle => small_directories_angle,  
                                 :type => ((small_directories_angle >= @minimum_angle or @remainder_mode != :empty) ? :directory : :empty),
                                 :name => "#{child.name}/", 
                                 :href => url_for(:controller => :graph, 
@@ -431,6 +464,7 @@ private
                                                                        :action => nil,
                                                                        :path => child.path}),
                                 :tooltip => "...#{child.path_relative_to(@directory)}/ (#{GraphHelper::format_human(child.size.bytes)})")
+             end
         end
         level_segments << segment
         
@@ -438,8 +472,9 @@ private
       end
 
       big_directories.each do |big_directory|
-        segment_angle = big_directory.size.bytes * angle_range / parent_bytes
-        segment = Segment.new(:angle => segment_angle, 
+       if @size_type == :disk
+	 	segment_angle = big_directory.size.diskSize * angle_range / parent_bytes
+ 		segment = Segment.new(:angle => segment_angle, 
                               :type => :directory,
                               :name => "#{big_directory.name}/", 
                               :href => url_for(:controller => :graph, 
@@ -447,9 +482,23 @@ private
                                                :overwrite_params => {:server => @server.name, 
                                                                      :action => nil,
                                                                      :path => big_directory.path}),
-                              :tooltip => "...#{big_directory.path_relative_to(@directory)}/ (#{GraphHelper::format_human(big_directory.size.bytes)})")
-        level_segments << segment
-        add_segments(level + 1, segment_angle, level_segment_array, big_directory, big_directory.size.bytes)
+                              :tooltip => "...#{big_directory.path_relative_to(@directory)}/ (#{GraphHelper::format_human(big_directory.size.diskSize)})")
+ 			level_segments << segment
+ 			add_segments(level + 1, segment_angle, level_segment_array, big_directory, big_directory.size.diskSize)
+		else
+			segment_angle = big_directory.size.bytes * angle_range / parent_bytes
+			segment = Segment.new(:angle => segment_angle,
+ 			:type => :directory,
+			:name => "#{big_directory.name}/",
+ 			:href => url_for(:controller => :graph,
+			:escape => false,
+			:overwrite_params => {:server => @server.name,
+			:action => nil,
+ 			:path => big_directory.path}),
+			:tooltip => "...#{big_directory.path_relative_to(@directory)}/ (#{GraphHelper::format_human(big_directory.size.bytes)})")
+ 			level_segments << segment
+			add_segments(level + 1, segment_angle, level_segment_array, big_directory, big_directory.size.bytes)
+		end
       end
       
       if small_files_angle > 0
@@ -470,11 +519,19 @@ private
 
       files_total_angle = small_files_angle
       big_files.each do |file|
-        angle = file.bytes * angle_range / parent_bytes
+        if @size_type == :disk
+		angle = file.size.diskSize * angle_range / parent_bytes
         file_segment = Segment.new(:angle => angle, 
                                    :type => :file,
                                    :name => file.name,
-                                   :tooltip => "...#{directory.path_relative_to(@directory)}/#{file.name} (#{GraphHelper::format_human(file.bytes)})")
+                                   :tooltip => "...#{directory.path_relative_to(@directory)}/#{file.name} (#{GraphHelper::format_human(file.size.diskSize)})")
+	   else
+ 		angle = file.size.bytes * angle_range / parent_bytes
+ 		file_segment = Segment.new(:angle => angle,
+ 		:type => :file,
+ 		:name => file.name,
+		:tooltip => "...#{directory.path_relative_to(@directory)}/#{file.name} (#{GraphHelper::format_human(file.size.bytes)})")
+ 		end
         level_segments << file_segment
         files_total_angle += angle
       end
@@ -860,7 +917,11 @@ private
       remaining_width = @width - @offset_x
       remaining_height = @height - @offset_y
 
-      sum = row.map { |node| node.size.bytes*factor }.sum
+      if @size_type == :disk
+		 sum = row.map { |node| node.size.diskSize*factor }.sum
+ 	 else
+ 		sum = row.map { |node| node.size.bytes*factor }.sum
+ 	 end
 
       if remaining_height > 0 and remaining_width > 0 and sum > 0 then
 
@@ -872,7 +933,11 @@ private
           top = @offset_y
 
           row.each do |r|
-            height = r.size.bytes*factor/width
+           if @size_type == :disk
+		   height = r.size.diskSize*factor/width
+		 else
+  		   height = r.size.bytes*factor/width
+		 end
             @sub_rectangles << SubRect.new(@x + left, @y + top, width, height, r)
             top += height
           end
@@ -885,7 +950,11 @@ private
           top = @offset_y
 
           row.each do |r|
-            width = r.size.bytes*factor/height
+            if @size_type == :disk
+			width = r.size.diskSize*factor/height
+		  else
+			width = r.size.bytes*factor/height
+ 		  end
             @sub_rectangles << SubRect.new(@x + left, @y + top, width, height, r)
             left += width
           end
@@ -897,11 +966,20 @@ private
     end
 
     def worst(row, w, factor)
-      s = row.map { |node| node.size.bytes * factor }.sum
-      if row.empty? or s == 0 or factor == 0
-        0
+      if @size_type == :disk
+		 s = row.map { |node| node.size.diskSize * factor }.sum
+		if row.empty? or s == 0 or factor == 0
+			0
+		else
+ 		  [(w*w*row[0].size.diskSize*factor)/(s*s), (s*s)/(w*w*row[-1].size.diskSize*factor)].max
+		end
       else
-        [(w*w*row[0].size.bytes*factor)/(s*s), (s*s)/(w*w*row[-1].size.bytes*factor)].max
+        s = row.map { |node| node.size.bytes * factor }.sum
+		if row.empty? or s == 0 or factor == 0
+ 			0
+		else
+			[(w*w*row[0].size.bytes*factor)/(s*s), (s*s)/(w*w*row[-1].size.bytes*factor)].max
+		end
       end
     end
     
@@ -965,7 +1043,11 @@ private
     end
 
     def tooltip
-      "...#{relative_path} (#{GraphHelper::format_human(@directory.size.bytes)})"
+      if @size_type == :disk
+		"...#{relative_path} (#{GraphHelper::format_human(@directory.size.diskSize)})"
+ 	 else
+		"...#{relative_path} (#{GraphHelper::format_human(@directory.size.bytes)})"
+	 end
     end
   end
 
@@ -988,7 +1070,11 @@ private
     end
 
     def tooltip
-      "...#{@parent.relative_path}/#{@file.name} (#{GraphHelper::format_human(@file.size.bytes)})"
+      if @size_type == :disk
+		 "...#{@parent.relative_path}/#{@file.name} (#{GraphHelper::format_human(@file.size.diskSize)})"
+ 	else
+		"...#{@parent.relative_path}/#{@file.name} (#{GraphHelper::format_human(@file.size.bytes)})"
+ 	end
     end
 
     def children
@@ -998,7 +1084,11 @@ private
 
   def create_treemap_recursive(node, rect, level, sub_rectangle_array, max_levels)
 
-    total_size = node.children.map { |child| child.size.bytes }.sum
+    if @size_type == :disk
+		total_size = node.children.map { |child| child.size.diskSize }.sum
+	else
+		total_size = node.children.map { |child| child.size.bytes }.sum
+	end
     if total_size > 0
       rect.squarify(node.children, [], rect.width(), rect.area / total_size)
 

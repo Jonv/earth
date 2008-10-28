@@ -54,6 +54,15 @@ module Earth
     @@cache_enabled = true
    
     cattr_accessor :cache_enabled
+    @@config = nil
+    def self.config
+ 	@@config = ApplicationController::webapp_config unless @@config
+ 	@@config
+    end
+
+    def self.size_type
+		self.config["size_type"].to_i
+    end 
     
     def self.filter_and_add_bytes(directories,options={})
         show_empty  = options[:show_empty]
@@ -73,7 +82,11 @@ module Earth
           any_hidden_directories = true if d.hidden?
           
           if (show_empty || size.count > 0) && (show_hidden || !d.hidden?)
-            [d, size.bytes]
+			if @size_type == :disk
+				[d, size.diskSize]
+ 			else
+ 				[d, size.bytes]
+			end 
           end
         end
 
@@ -133,6 +146,7 @@ module Earth
     
     # Returns all files belonging to sub-directories of the current directory
     # down to the given level (including that level)
+    #Ticket 138
     def find_files_down_to_level(level)
        
       Earth::File.find(:all, 
