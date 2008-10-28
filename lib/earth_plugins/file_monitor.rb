@@ -25,15 +25,18 @@ class FileMonitor < EarthPlugin
   
 
   #TODO method comments
-  def initialize
+  #the plugin flag is used to give you the choice of running file_monitor as a plugin or not
+  def initialize(plugin = true)
     #TODO get it as parameter
     @status_logger = Logger.new("/tmp/earthd_status.log")
     
     
     
-    #bring the parameters from the plug-in session
-    @logger = get_param(:logger)
-    iteration(get_param(:cache), get_param(:only_initial_update), get_param(:force_update_time))
+    if plugin
+      #bring the parameters from the plug-in session
+      @logger = get_param(:logger)
+      iteration(get_param(:cache), get_param(:only_initial_update), get_param(:force_update_time))
+    end
   end
 
   def logger=(logger)
