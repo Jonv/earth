@@ -18,7 +18,7 @@ require 'csv'
 require 'pp'
 
 class BrowserController < ApplicationController
-  before_filter :load_context, :only => [:index,:flat,:show,:usages, :category]
+  before_filter :load_context, :only => [:index,:flat,:show,:usages,:category]
 
   def index
     redirect_to :action => 'show'
@@ -146,20 +146,20 @@ class BrowserController < ApplicationController
     end
   end
   
-  #def usages
-  #  if @server == nil then
-  #    @users_space_usages = Earth::File.find(:all,
-  #                                            :select => "sum(files.bytes) as space_usage, files.uid, directories.server_id",
-  #                                            :joins => "join directories on files.directory_id = directories.id",
-  #                                            :group => "files.uid, directories.server_id")
-  #  else
-  #    @users_space_usages = Earth::File.find(:all,
-  #                                            :select => "sum(files.bytes) as space_usage, files.uid, directories.server_id",
-  #                                            :joins => "join directories on files.directory_id = directories.id",
-  #                                            :group => "files.uid, directories.server_id",
-  #                                            :conditions => [ "server_id = ? ", @server ])
-  #  end
-  #end
+  def usages
+    if @server == nil then
+      @users_space_usages = Earth::File.find(:all,
+                                              :select => "sum(files.bytes) as space_usage, files.uid, directories.server_id",
+                                              :joins => "join directories on files.directory_id = directories.id",
+                                              :group => "files.uid, directories.server_id")
+    else
+      @users_space_usages = Earth::File.find(:all,
+                                              :select => "sum(files.bytes) as space_usage, files.uid, directories.server_id",
+                                              :joins => "join directories on files.directory_id = directories.id",
+                                              :group => "files.uid, directories.server_id",
+                                              :conditions => [ "server_id = ? ", @server ])
+    end
+  end
 
   def auto_complete_for_filter_user
     if User.ldap_configured?
@@ -170,7 +170,7 @@ class BrowserController < ApplicationController
   
   #Keane: added for ticket 42
   
-    def category
+  def category
 
     @show_hidden = params[:show_hidden]
 

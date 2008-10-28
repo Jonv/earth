@@ -126,12 +126,10 @@ class FileMonitor < EarthPlugin
   end
   
   # Remove all directories on this server from the database
-  # Ken: Included Earth::UsersSpaceUsage.delete_all
   def database_cleanup
     this_server = Earth::Server.this_server
     benchmark "Clearing old data for this server out of the database" do
       Earth::Directory.delete_all "server_id=#{this_server.id}"
-      Earth::UsersSpaceUsage.delete_all "id >= 0"
     end  
     this_server.last_update_finish_time = nil
     this_server.save!

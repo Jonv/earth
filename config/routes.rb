@@ -14,8 +14,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-include UsageRoutes
-
 hostname_regex = /\w[\w-]*(\.\w[\w-]*)*/
 
 ActionController::Routing::Routes.draw do |map|
@@ -65,8 +63,15 @@ ActionController::Routing::Routes.draw do |map|
     :requirements => {:server => hostname_regex}
   map.connect '/browser/category.:format/:server*path', :controller => "browser", :action => "category",
     :requirements => {:server => hostname_regex}
-    
-  mapPluginRoute(map, hostname_regex)
+  
+  # Ken: setup controller "browser", action "usages"  
+  map.connect '/browser/usages', :controller => "browser", :action => "usages"
+  map.connect '/browser/usages/:server', :controller => "browser", :action => "usages",
+    :requirements => {:server => hostname_regex}
+  map.connect '/browser/usages/:server*path', :controller => "browser", :action => "usages",
+    :requirements => {:server => hostname_regex}
+  map.connect '/browser/usages.:format/:server*path', :controller => "browser", :action => "usages",
+    :requirements => {:server => hostname_regex}
 
   # setup controller "graph", action "show"
   map.connect '/graph/show', :controller => "graph", :action => "show"
