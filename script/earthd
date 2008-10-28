@@ -27,6 +27,7 @@ require 'yaml'
 require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_plugin_interface', 'earth_plugin.rb')
 require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_plugin_interface', 'plugin_manager.rb')
 require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_plugin_interface', 'extensions.rb')
+require File.join(File.dirname(__FILE__), '..', 'lib', 'earth_api', 'metadata_api.rb')
 require File.join(File.dirname(__FILE__), '..', 'lib', 'earthd_helper.rb')
 include Extensions
 
@@ -381,9 +382,11 @@ class Earthd
       "Refusing to remove directory '#{path}': not readable"
     else
     	if Earth::Server::this_server.directories.exists?(:path => path)
-    		dir_id = Earth::Server::this_server.directories.find(:first, :conditions => [ "path = ?", path]).id
+    		dir = Earth::Server::this_server.directories.find(:first, :conditions => [ "path = ?", path])
     		logger.debug("Directory '#{path}' removed.")
-    		Earth::Server::this_server.directories.destroy(dir_id)
+                #remove all related metadata
+    		EarthApi::MetadataApi.delete_all_files_metadata_under_dir_all(dir)
+    		Earth::Server::this_server.directories.destroy(dir.id)
         return "OK"
     	else
     		return "Cannot remove directory '#{path}': path not found."

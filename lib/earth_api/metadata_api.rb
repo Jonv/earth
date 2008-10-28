@@ -1,6 +1,12 @@
 module EarthApi
-  #TODO class comments
+  # The +MetadataApi+ class provides methods to manage files metadata
+  # Main methods:
+  # 1- save_file_metadata
+  # 2- delete_file_metadata
+  # 3- delete_all_files_metadata_under_dir
+  # 4- remove_metadata_for_plugin
   class MetadataApi
+    
     # the +save_file_metadata+ save metadata for a given file
     # if there is already metdata for this file it will be deleted and the new ones will be saved
     # === Parameters:
@@ -15,7 +21,6 @@ module EarthApi
     # {"file_type" => "JPG"}...etc
     def self.save_file_metadata(file, metadata)
       #delete any old metadata for this file
-      # TODO
       attribute_names = metadata.keys
       delete_file_metadata(file, attribute_names)
       
@@ -132,9 +137,13 @@ module EarthApi
     # === Parameters:
     # * _files_ = list of files. Their metadata will be deleted, one by one using the +delete_file_metadata+ method
     # * _attribute_names_ = TODO  
-    def self.delete_list_files_metadata(files, attribute_names)
+    def self.delete_list_files_metadata(files, attribute_names = nil)
       for i in 0..files.size-1 do
-        delete_file_metadata(files[i], attribute_names)
+        if not attribute_names.nil?
+          delete_file_metadata(files[i], attribute_names)
+        else
+          delete_file_metadata_all(files[i])
+        end
       end
     end
     
@@ -238,6 +247,29 @@ module EarthApi
         attribute.destroy
       end
       
+    end
+    
+    # deletes all files_metadata for all files under a directory and its subdirectories
+    # all metadata will be deleted
+    def self.delete_all_files_metadata_under_dir_all(dir)
+      if dir.direct_children.size == 0
+        delete_list_files_metadata(dir.files)
+        return
+      end
+      
+      children = dir.direct_children
+      
+      for i in 0..children.size-1 do
+        delete_all_files_metadata_under_dir_all(children[i])
+      end
+    end
+    
+    #This method will remove any metadata association with the passed file
+    def self.delete_file_metadata_all(file)
+      Earth::FilesMetadataString.delete_all({:file_id => file.id})
+      
+      #Earth::FilesMetadataInteger.delete_all({:file_id => file.id})
+      #and so on ...
     end
     
     
