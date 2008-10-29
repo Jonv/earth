@@ -19,6 +19,24 @@ module ApplicationHelper
 
   $the_sections = [:index, :flat,:show]
 
+  #----------------------------------------
+  # GUI plugin adding start
+  #-----------------------------------------
+  $tab_info =
+   [
+   { :title => "navigation", :controller => "browser", :action => "show" },
+   { :title => "all files", :controller => "browser", :action => "flat" },
+   { :title => "radial", :controller => "graph", :action => "index" },
+   # Ken: Added usage browser tab
+   { :title => "user usages", :controller => "browser", :action => "usages" },
+   # Keane: Added category tab
+   { :title => "category", :controller => "browser", :action => "category" }
+   ]
+  $field_tag = [ ]
+  #----------------------------------------
+  # GUI plugin adding end
+  #-----------------------------------------
+
   def self_and_ancestors_up_to(directory, parent_dir)
     if parent_dir.nil?
       directory.self_and_ancestors
@@ -144,7 +162,12 @@ module ApplicationHelper
       nil
     end
   end
-  
+
+#----------------------------------------
+# This is commented because we are going to use tabs as GUI plugins
+#-----------------------------------------
+
+=begin  
   def tab_info
     [
       { :title => "navigation", :controller => "browser", :action => "show" },
@@ -156,7 +179,7 @@ module ApplicationHelper
       { :title => "category",    :controller => "browser",   :action => "category" }
     ]
   end
-
+=end
 
 private
 
