@@ -36,6 +36,7 @@ class GraphController < ApplicationController
     @minimum_angle = @@webapp_config["graph_min_angle"]
     @remainder_mode = @@webapp_config["graph_remainder_mode"].to_sym
     @coloring_mode = @@webapp_config["graph_coloring_mode"].to_sym
+    @size_type = @@webapp_config["size_type"].to_sym
   end
 
   #

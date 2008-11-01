@@ -48,13 +48,24 @@ module ApplicationHelper
   end
 
   def current_total_size
-    if @directory
-      @directory.size.bytes
-    elsif @server
-      @server.size.bytes
-    else
-      Earth::Server::find(:all).map { |server| server.size.bytes }.sum
-    end
+    if @size_type == :disk
+ 	if @directory
+ 		@directory.size.diskSize
+	elsif @server
+		@server.size.diskSize
+	else
+		Earth::Server::find(:all).map { |server| server.size.diskSize }.sum
+
+	end
+	else
+	if @directory
+		@directory.size.bytes
+	elsif @server
+		@server.size.bytes
+	else
+		Earth::Server::find(:all).map { |server| server.size.bytes }.sum
+	end
+	end
   end
 
 

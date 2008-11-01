@@ -16,12 +16,13 @@
 
 class Size
   include Comparable
-  attr_accessor :bytes, :blocks, :count
+  attr_accessor :bytes, :blocks, :count, :diskSize
   
   def initialize(bytes, blocks, count)
     @bytes = bytes
     @blocks = blocks
     @count = count
+    @diskSize=blocks*512
   end
   
   def +(size)
@@ -33,7 +34,7 @@ class Size
   end
   
   def ==(size)
-    bytes == size.bytes && blocks == size.blocks && count == size.count
+    bytes == size.bytes && blocks == size.blocks && count == size.count && diskSize == size.diskSize
   end
 
   def <=>(anOther)
@@ -41,7 +42,7 @@ class Size
   end
 
   def to_s
-    units = ApplicationHelper::human_units_of(bytes)
-    "#{ApplicationHelper::human_size_in(units, bytes)} #{units}"
+     units = ApplicationHelper::human_units_of(diskSize)
+	"#{ApplicationHelper::human_size_in(units, diskSize)} #{units}"
   end
 end

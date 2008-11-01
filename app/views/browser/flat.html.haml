@@ -79,6 +79,9 @@
             %span{:title => file.modified}= distance_of_time_in_words_to_now(file.modified) + " ago"
           %td.owner_user
             %span= file.user.name
-          %td.sizec
-            %span= ApplicationHelper.human_size_in(ApplicationHelper.human_units_of(file.bytes), file.bytes) + " " + ApplicationHelper.human_units_of(file.bytes)
+          %td.size
+            - if @size_type == :disk
+              %span= ApplicationHelper.human_size_in(ApplicationHelper.human_units_of(file.size.diskSize), file.size.diskSize) + " " + ApplicationHelper.human_units_of(file.size.diskSize)
+            - else
+              %span= ApplicationHelper.human_size_in(ApplicationHelper.human_units_of(file.bytes), file.bytes) + " " + ApplicationHelper.human_units_of(file.bytes)
           %td.bar= bar file.bytes, max_size, :class => "bar"

@@ -18,6 +18,11 @@ class ServersController < ApplicationController
 
   # GET /servers
   # GET /servers.xml
+  
+  def initialize
+	@size_type = @@webapp_config["size_type"].to_sym
+  end
+  
   def index
     Earth::File::with_filter do
       @servers = Earth::Server.find(:all)

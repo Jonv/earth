@@ -93,3 +93,8 @@ graph_multiple_file_saturation: 100
 
 graph_multiple_directory_hue: 200
 graph_multiple_directory_saturation: 100
+
+# ----- Size Configuration -----
+# choose whether we use file size or disk usage. 'byte' means use file sizes
+# 'disk' means use real disk usage.
+size_type: byte
