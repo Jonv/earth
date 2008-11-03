@@ -90,20 +90,14 @@
           %td.icon.Dir= link_to "", :overwrite_params => {:path => directory.path}
           %td.name.Dir
             = link_to(directory.name, {:overwrite_params => {:path => directory.path}})
-#<<<<<<< HEAD:app/views/browser/show.html.haml
-#
-#          %td.modified.Dir
-#            %span{:title => directory.modified}= distance_of_time_in_words_to_now(directory.modified) + " ago"
-#          %td.owner_user
-#            %span= directory.uid
-#
-#          %td.size.Dir= link_to "<span>#{ApplicationHelper::human_size_in(ApplicationHelper::human_units_of(directory.bytes), directory.bytes)} #{ApplicationHelper::human_units_of(directory.bytes)}</span>", :overwrite_params => {:path => directory.path}
-#=======
-#          - if @size_type == :disk
-#            %td.size.Dir= link_to "<span>#{ApplicationHelper.human_size_in(ApplicationHelper.human_units_of(directory.size.diskSize), directory.size.diskSize) + " " + ApplicationHelper.human_units_of(directory.size.diskSize)}</span>", :overwrite_params => {:path => directory.path}  ##Ticket #145 changed here
-#          - else
-#            %td.size.Dir= link_to "<span>#{ApplicationHelper.human_size_in(ApplicationHelper.human_units_of(directory.size.bytes), directory.size.bytes) + " " + ApplicationHelper.human_units_of(directory.size.bytes)}</span>", :overwrite_params => {:path => directory.path}  ##Ticket #145 changed here
-#>>>>>>> segp2sg1/master:app/views/browser/show.html.haml
+          %td.modified.Dir
+            %span{:title => directory.modified}= distance_of_time_in_words_to_now(directory.modified) + " ago"
+          %td.owner_user
+            %span= directory.uid
+          - if @size_type == :disk
+            %td.size.Dir= link_to "<span>#{ApplicationHelper.human_size_in(ApplicationHelper.human_units_of(directory.size.diskSize), directory.size.diskSize) + " " + ApplicationHelper.human_units_of(directory.size.diskSize)}</span>", :overwrite_params => {:path => directory.path}  ##Ticket #145 changed here
+          - else
+            %td.size.Dir= link_to "<span>#{ApplicationHelper.human_size_in(ApplicationHelper.human_units_of(directory.size.bytes), directory.size.bytes) + " " + ApplicationHelper.human_units_of(directory.size.bytes)}</span>", :overwrite_params => {:path => directory.path}  ##Ticket #145 changed here
           %td.bar.Dir= link_to bar(size, max_size, :class => "bar"), :overwrite_params => {:path => directory.path}
       - @files.each do |file|
         %tr{:class => cycle('even', 'odd')}

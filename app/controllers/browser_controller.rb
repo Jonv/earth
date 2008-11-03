@@ -19,20 +19,11 @@ require 'pp'
 
 class BrowserController < ApplicationController
   before_filter :load_context, :only => [:index,:flat,:show,:usages, :category]
+  
+  def initialize
+ 	@size_type = @@webapp_config["size_type"].to_sym
+ end
 
-#<<<<<<< HEAD:app/controllers/browser_controller.rb
-#=======
-#  # Possible to add a view plugin hook here?
-#  include UsagesHelper
-#
-#  before_filter :load_context, :only => $the_sections
-#  
-#  def initialize
-# 	@size_type = @@webapp_config["size_type"].to_sym
-#
-#  end
-#  
-#>>>>>>> segp2sg1/master:app/controllers/browser_controller.rb
   def index
     redirect_to :action => 'show'
   end
